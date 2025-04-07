@@ -3,13 +3,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {
   Card,
@@ -28,7 +28,7 @@ import {
   Trash2,
   ShoppingBag
 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 interface Product {
   id: string;
@@ -69,13 +70,12 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
+
   const categories = Array.from(new Set(products.map(product => product.category))).sort();
-  
-  const filteredProducts = products.filter(product => 
+
+  const filteredProducts = products.filter(product =>
     (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     product.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      product.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (categoryFilter === "" || product.category === categoryFilter)
   );
 
@@ -84,6 +84,7 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
     toast({
       title: "Product deleted",
       description: "The product has been deleted successfully",
+      variant: "success"
     });
   };
 
@@ -108,7 +109,7 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All Categories" />
@@ -123,7 +124,7 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
             </SelectContent>
           </Select>
         </div>
-        
+
         <Button onClick={() => navigate("/products/new")}>
           <ShoppingBag className="mr-2 h-4 w-4" />
           Add Product
@@ -137,8 +138,8 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
               <ShoppingBag className="mx-auto h-12 w-12 text-muted-foreground/60" />
               <h3 className="text-lg font-medium">No products found</h3>
               <p className="text-muted-foreground">Get started by adding your first product</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => navigate("/products/new")}
                 className="mt-2"
               >
@@ -153,8 +154,8 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
               <p className="text-muted-foreground">
                 Try adjusting your search or filter to find what you're looking for
               </p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setSearchTerm("");
                   setCategoryFilter("");
@@ -171,8 +172,8 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
           {filteredProducts.map((product) => (
             <Card key={product.id} className="overflow-hidden flex flex-col interactive-card">
               <div className="aspect-video relative overflow-hidden bg-muted">
-                <img 
-                  src={product.imageUrl || "/placeholder.svg"} 
+                <img
+                  src={product.imageUrl || "/placeholder.svg"}
                   alt={product.name}
                   className="object-cover w-full h-full"
                   onError={(e) => {
@@ -216,7 +217,7 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
+                              <AlertDialogAction
                                 onClick={() => handleDeleteProduct(product.id)}
                                 className="bg-red-600 hover:bg-red-700"
                               >
@@ -237,8 +238,8 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
               </CardContent>
               <CardFooter className="flex justify-between items-center p-4 pt-0 border-t mt-auto">
                 <p className="font-bold">{formatCurrency(product.price)}</p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   onClick={() => navigate(`/orders/new?product=${product.id}`)}
                 >
                   Create Order

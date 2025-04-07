@@ -5,49 +5,50 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useCustomerStore } from "@/store/useCustomerStore";
 
 const LoginForm = () => {
+  const loginCustomer = useCustomerStore((state) => state.loginCustomer);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
-    // Simulating login - in a real app, this would connect to your backend
-    setTimeout(() => {
-      // Store the user in localStorage for now
-      localStorage.setItem("user", JSON.stringify({ 
-        id: "1", 
-        email, 
-        name: "Admin User",
-        role: "admin"
-      }));
-      
+
+    const result = await loginCustomer({ email, password });
+
+    if (result.status) {
       toast({
         title: "Success",
         description: "You have been logged in",
       });
-      
       navigate("/dashboard");
-      setIsLoading(false);
-    }, 1000);
+    } else {
+      toast({
+        title: "Error",
+        description: result.message,
+        variant: "error",
+      });
+    }
+
+    setIsLoading(false);
   };
 
   return (

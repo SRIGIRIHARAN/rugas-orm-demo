@@ -22,9 +22,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 interface Customer {
   id: string;
@@ -70,7 +71,6 @@ const OrderForm = ({ editMode = false, initialData }: OrderFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   
   useEffect(() => {
@@ -135,7 +135,7 @@ const OrderForm = ({ editMode = false, initialData }: OrderFormProps) => {
       toast({
         title: "Error",
         description: "Please select a customer",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -144,7 +144,7 @@ const OrderForm = ({ editMode = false, initialData }: OrderFormProps) => {
       toast({
         title: "Error",
         description: "Please select at least one product",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }

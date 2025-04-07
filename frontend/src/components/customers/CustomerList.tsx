@@ -1,17 +1,17 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,15 +19,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Edit, 
-  MoreVertical, 
-  Plus, 
-  Search, 
-  Trash2, 
-  UserPlus 
+import {
+  Edit,
+  MoreVertical,
+  Plus,
+  Search,
+  Trash2,
+  UserPlus
 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +39,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 interface Customer {
   id: string;
@@ -57,9 +58,8 @@ interface CustomerListProps {
 const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  const filteredCustomers = customers.filter(customer => 
+
+  const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone.includes(searchTerm)
@@ -70,15 +70,16 @@ const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
     toast({
       title: "Customer deleted",
       description: "The customer has been deleted successfully",
+      variant: "success"
     });
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     }).format(date);
   };
 
@@ -116,12 +117,12 @@ const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
             {filteredCustomers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  {customers.length === 0 
+                  {customers.length === 0
                     ? (
                       <div className="flex flex-col items-center gap-2">
                         <p>No customers found</p>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => navigate("/customers/new")}
                         >
@@ -129,7 +130,7 @@ const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
                           Add your first customer
                         </Button>
                       </div>
-                    ) 
+                    )
                     : "No customers match your search"
                   }
                 </TableCell>
@@ -172,7 +173,7 @@ const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
+                                <AlertDialogAction
                                   onClick={() => handleDeleteCustomer(customer.id)}
                                   className="bg-red-600 hover:bg-red-700"
                                 >

@@ -1,37 +1,38 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Edit, 
-  User, 
-  Calendar, 
+import {
+  Edit,
+  User,
+  Calendar,
   Clock,
-  Truck, 
-  ShoppingBag, 
-  CheckCircle, 
+  Truck,
+  ShoppingBag,
+  CheckCircle,
   XCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 interface Customer {
   id: string;
@@ -81,26 +82,25 @@ const statusStyles = {
 
 const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: 'numeric',
       minute: 'numeric'
     }).format(date);
   };
-  
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
   };
-  
+
   const getOrderItems = () => {
     return order.products.map(item => {
       const product = products.find(p => p.id === item.productId);
@@ -111,10 +111,10 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
       };
     });
   };
-  
+
   const handleStatusChange = (newStatus: "placed" | "shipped" | "delivered" | "cancelled") => {
     onStatusChange(order.id, newStatus);
-    
+
     // Show toast notification
     const statusMessages = {
       placed: "Order status set to Placed",
@@ -122,13 +122,14 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
       delivered: "Order has been marked as Delivered",
       cancelled: "Order has been Cancelled"
     };
-    
+
     toast({
       title: "Status Updated",
       description: statusMessages[newStatus],
+      variant: "success"
     });
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -138,19 +139,19 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
             Created on {formatDate(order.createdAt)}
           </p>
         </div>
-        
+
         <div className="flex flex-wrap gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => navigate(`/orders/edit/${order.id}`)}
           >
             <Edit className="mr-2 h-4 w-4" />
             Edit Order
           </Button>
-          
+
           {order.status !== "placed" && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => handleStatusChange("placed")}
               className="text-blue-600"
             >
@@ -158,10 +159,10 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
               Mark as Placed
             </Button>
           )}
-          
+
           {order.status !== "shipped" && order.status !== "cancelled" && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => handleStatusChange("shipped")}
               className="text-yellow-600"
             >
@@ -169,10 +170,10 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
               Mark as Shipped
             </Button>
           )}
-          
+
           {order.status !== "delivered" && order.status !== "cancelled" && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => handleStatusChange("delivered")}
               className="text-green-600"
             >
@@ -180,10 +181,10 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
               Mark as Delivered
             </Button>
           )}
-          
+
           {order.status !== "cancelled" && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => handleStatusChange("cancelled")}
               className="text-red-600"
             >
@@ -193,7 +194,7 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
           )}
         </div>
       </div>
-      
+
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">Status:</span>
@@ -205,9 +206,9 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
           {formatCurrency(order.total)}
         </div>
       </div>
-      
+
       <Separator />
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
@@ -228,17 +229,17 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
             </div>
           </CardContent>
           <CardFooter>
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              size="sm" 
+            <Button
+              variant="outline"
+              className="w-full"
+              size="sm"
               onClick={() => navigate(`/customers/${customer.id}`)}
             >
               View Customer
             </Button>
           </CardFooter>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -256,7 +257,7 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
                 </p>
               </div>
             </div>
-            
+
             {order.createdAt !== order.updatedAt && (
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-blue-600 mt-2" />
@@ -268,7 +269,7 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
                 </div>
               </div>
             )}
-            
+
             {order.status !== "placed" && (
               <div className="flex items-start gap-3">
                 <div className={cn(
@@ -289,7 +290,7 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
             )}
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -306,7 +307,7 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
           </CardContent>
         </Card>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Order Items</CardTitle>
@@ -330,8 +331,8 @@ const OrderDetail = ({ order, customer, products, onStatusChange }: OrderDetailP
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded overflow-hidden bg-muted">
-                        <img 
-                          src={item.product?.imageUrl || "/placeholder.svg"} 
+                        <img
+                          src={item.product?.imageUrl || "/placeholder.svg"}
                           alt={item.product?.name || "Product"}
                           className="w-full h-full object-cover"
                           onError={(e) => {

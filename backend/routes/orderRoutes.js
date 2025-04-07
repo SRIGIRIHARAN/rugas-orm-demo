@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 
-// Get all orders
 router.get('/', async (req, res) => {
   try {
     const orders = await Order.find().populate('customer').populate('products');
@@ -12,7 +11,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create new order
 router.post('/', async (req, res) => {
   const order = new Order(req.body);
   try {

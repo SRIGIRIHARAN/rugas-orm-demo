@@ -1,13 +1,13 @@
 
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,27 +20,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { 
-  Edit, 
-  MoreVertical, 
-  Plus, 
+import {
+  Edit,
+  MoreVertical,
+  Plus,
   Search,
-  Truck, 
-  ShoppingBag, 
-  CheckCircle, 
+  Truck,
+  ShoppingBag,
+  CheckCircle,
   XCircle,
   Filter
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +52,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 interface Customer {
   id: string;
@@ -97,55 +98,54 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [customerFilter, setCustomerFilter] = useState<string>("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
-  
+
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  
+
   // Extract all unique product categories
   const categories = Array.from(
     new Set(products.map(product => product.category))
   ).sort();
-  
+
   // Apply filters
   const filteredOrders = orders.filter(order => {
     // Customer name filter
     const customer = customers.find(c => c.id === order.customerId);
     const customerName = customer ? customer.name.toLowerCase() : "";
-    const matchesSearch = customerName.includes(searchTerm.toLowerCase()) || 
-                         order.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch = customerName.includes(searchTerm.toLowerCase()) ||
+      order.id.toLowerCase().includes(searchTerm.toLowerCase());
+
     // Status filter
     const matchesStatus = !statusFilter || order.status === statusFilter;
-    
+
     // Customer filter
     const matchesCustomer = !customerFilter || order.customerId === customerFilter;
-    
+
     // Category filter - check if any product in order belongs to the selected category
     const matchesCategory = !categoryFilter || order.products.some(item => {
       const product = products.find(p => p.id === item.productId);
       return product && product.category === categoryFilter;
     });
-    
+
     return matchesSearch && matchesStatus && matchesCustomer && matchesCategory;
   });
-  
+
   // Get customer name by ID
   const getCustomerName = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
     return customer ? customer.name : "Unknown Customer";
   };
-  
+
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     }).format(date);
   };
-  
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -153,10 +153,10 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
       currency: 'USD',
     }).format(amount);
   };
-  
+
   const handleStatusChange = (orderId: string, newStatus: "placed" | "shipped" | "delivered" | "cancelled") => {
     onStatusChange(orderId, newStatus);
-    
+
     // Show toast notification
     const statusMessages = {
       placed: "Order status set to Placed",
@@ -164,13 +164,14 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
       delivered: "Order has been marked as Delivered",
       cancelled: "Order has been Cancelled"
     };
-    
+
     toast({
       title: "Status Updated",
       description: statusMessages[newStatus],
+      variant: "success"
     });
   };
-  
+
   // Check if there's a customer filter in the URL params
   React.useEffect(() => {
     const customerIdFromUrl = searchParams.get("customer");
@@ -178,7 +179,7 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
       setCustomerFilter(customerIdFromUrl);
     }
   }, [searchParams]);
-  
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4">
@@ -198,13 +199,13 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
             New Order
           </Button>
         </div>
-        
+
         <div className="flex flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Filters:</span>
           </div>
-          
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="h-8 text-xs px-3 w-[130px]">
               <SelectValue placeholder="All Statuses" />
@@ -217,7 +218,7 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-          
+
           <Select value={customerFilter} onValueChange={setCustomerFilter}>
             <SelectTrigger className="h-8 text-xs px-3 w-[150px]">
               <SelectValue placeholder="All Customers" />
@@ -231,7 +232,7 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
               ))}
             </SelectContent>
           </Select>
-          
+
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="h-8 text-xs px-3 w-[150px]">
               <SelectValue placeholder="All Categories" />
@@ -245,10 +246,10 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
               ))}
             </SelectContent>
           </Select>
-          
+
           {(statusFilter || customerFilter || categoryFilter) && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => {
                 setStatusFilter("");
@@ -282,8 +283,8 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
                   {orders.length === 0 ? (
                     <div className="flex flex-col items-center gap-2">
                       <p>No orders found</p>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => navigate("/orders/new")}
                       >
@@ -327,28 +328,28 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           disabled={order.status === "placed"}
                           onClick={() => handleStatusChange(order.id, "placed")}
                         >
                           <ShoppingBag className="mr-2 h-4 w-4 text-blue-600" />
                           Mark as Placed
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           disabled={order.status === "shipped" || order.status === "cancelled"}
                           onClick={() => handleStatusChange(order.id, "shipped")}
                         >
                           <Truck className="mr-2 h-4 w-4 text-yellow-600" />
                           Mark as Shipped
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           disabled={order.status === "delivered" || order.status === "cancelled"}
                           onClick={() => handleStatusChange(order.id, "delivered")}
                         >
                           <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
                           Mark as Delivered
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           disabled={order.status === "cancelled"}
                           onClick={() => handleStatusChange(order.id, "cancelled")}
                         >

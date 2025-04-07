@@ -1,56 +1,92 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
+import { useCustomerStore } from "../../store/useCustomerStore";
+import { toast } from "@/hooks/use-toast";
+
+const schema = yup.object().shape({
+  name: yup.string().required("Full name is required"),
+  email: yup.string().email("Invalid email").required("Email is required"),
+  password: yup
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref("password")], "Passwords must match")
+    .required("Confirm Password is required"),
+});
+
+type FormData = yup.InferType<typeof schema>;
 
 const RegisterForm = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const navigate = useNavigate();
+  const { registerCustomer } = useCustomerStore();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name || !email || !password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onSubmit = async (data: FormData) => {
     setIsLoading(true);
-    
-    // Simulating registration - in a real app, this would connect to your backend
-    setTimeout(() => {
+    try {
+      const { name, email, password } = data;
+
+      const response = await registerCustomer({ name, email, password });
+      console.log('response', response)
+
+      if (response?.status) {
+        toast({
+          title: "Account created",
+          description: "You have been registered successfully",
+          variant: "success",
+        });
+
+        reset();
+        navigate("/login");
+      } else {
+        toast({
+          title: "Error",
+          description: response?.message || "Registration failed",
+          variant: "error",
+        });
+      }
+    } catch (err: any) {
       toast({
-        title: "Account created",
-        description: "You have been registered successfully",
+        title: "Error",
+        description: err?.response?.data?.message || "Registration failed",
+        variant: "error",
       });
-      
-      navigate("/login");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -62,38 +98,61 @@ const RegisterForm = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={isLoading}
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  id="name"
+                  placeholder="John Doe"
+                  disabled={isLoading}
+                  {...field}
+                />
+              )}
             />
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name.message}</p>
+            )}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="email@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
+            <Controller
+              name="email"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@example.com"
+                  disabled={isLoading}
+                  {...field}
+                />
+              )}
             />
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email.message}</p>
+            )}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    disabled={isLoading}
+                    {...field}
+                  />
+                )}
               />
               <Button
                 type="button"
@@ -105,18 +164,33 @@ const RegisterForm = () => {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </Button>
             </div>
+            {errors.password && (
+              <p className="text-sm text-red-500">{errors.password.message}</p>
+            )}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={isLoading}
+            <Controller
+              name="confirmPassword"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  disabled={isLoading}
+                  {...field}
+                />
+              )}
             />
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-500">
+                {errors.confirmPassword.message}
+              </p>
+            )}
           </div>
+
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Creating account..." : "Register"}
           </Button>
@@ -125,7 +199,11 @@ const RegisterForm = () => {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Button variant="link" className="p-0" onClick={() => navigate("/login")}>
+          <Button
+            variant="link"
+            className="p-0"
+            onClick={() => navigate("/login")}
+          >
             Login
           </Button>
         </p>

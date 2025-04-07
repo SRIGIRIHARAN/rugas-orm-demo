@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 interface CustomerFormProps {
   editMode?: boolean;
@@ -27,7 +28,6 @@ const CustomerForm = ({ editMode = false, initialData }: CustomerFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +36,7 @@ const CustomerForm = ({ editMode = false, initialData }: CustomerFormProps) => {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }

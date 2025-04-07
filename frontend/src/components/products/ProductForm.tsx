@@ -22,8 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
 import { ImagePlus } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface ProductFormProps {
   editMode?: boolean;
@@ -46,7 +47,6 @@ const ProductForm = ({ editMode = false, initialData }: ProductFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const categories = [
     "Electronics",
@@ -67,7 +67,7 @@ const ProductForm = ({ editMode = false, initialData }: ProductFormProps) => {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -97,6 +97,7 @@ const ProductForm = ({ editMode = false, initialData }: ProductFormProps) => {
         toast({
           title: "Product updated",
           description: "Product information has been updated successfully",
+          variant: "success"
         });
       } else {
         const newProduct = {
@@ -115,6 +116,7 @@ const ProductForm = ({ editMode = false, initialData }: ProductFormProps) => {
         toast({
           title: "Product added",
           description: "New product has been added successfully",
+          variant: "success"
         });
       }
 

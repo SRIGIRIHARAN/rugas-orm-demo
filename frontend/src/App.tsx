@@ -1,9 +1,7 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
 
 // Layouts
 import AppLayout from "./components/layout/AppLayout";
@@ -27,6 +25,7 @@ import EditOrderPage from "./pages/orders/edit/[id]";
 import OrderDetailsPage from "./pages/orders/[id]";
 import ProfilePage from "./pages/profile";
 import NotFound from "./pages/NotFound";
+import { ToastProvider } from "./components/ui/use-toast";
 
 // Initialize query client for React Query
 const queryClient = new QueryClient();
@@ -35,7 +34,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
+        <ToastProvider />
         <Sonner />
         <BrowserRouter>
           <Routes>

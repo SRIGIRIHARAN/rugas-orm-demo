@@ -1,31 +1,31 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  SidebarTrigger 
+import {
+  SidebarTrigger
 } from "@/components/ui/sidebar";
-import { 
-  Bell, 
-  Search, 
+import {
+  Bell,
+  Search,
   User,
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [user, setUser] = useState(() => {
     const userData = localStorage.getItem("user");
     return userData ? JSON.parse(userData) : null;
@@ -36,6 +36,7 @@ const Navbar = () => {
     toast({
       title: "Logged out",
       description: "You have been logged out successfully",
+      variant: "success"
     });
     navigate("/login");
   };
@@ -47,24 +48,24 @@ const Navbar = () => {
           <SidebarTrigger />
           <div className="relative w-64 hidden md:block">
             <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
-            <Input 
-              type="search" 
-              placeholder="Search..." 
-              className="w-full pl-8 bg-background" 
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="w-full pl-8 bg-background"
             />
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon">
             <Bell className="h-5 w-5" />
           </Button>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src="/placeholder.svg" alt="User" />
+                  <AvatarImage src="https://avatar.iran.liara.run/public/boy?username=Ash" alt="User" />
                   <AvatarFallback>
                     {user?.name?.charAt(0) || "U"}
                   </AvatarFallback>

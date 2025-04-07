@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Customer = require('../models/Customer');
 
-// Get all customers
 router.get('/', async (req, res) => {
   try {
     const customers = await Customer.find();
@@ -12,7 +11,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create new customer
 router.post('/', async (req, res) => {
   const customer = new Customer(req.body);
   try {

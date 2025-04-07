@@ -10,9 +10,8 @@ const AppLayout = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is logged in
-    const user = localStorage.getItem("user");
-    if (!user) {
+    const token = localStorage.getItem("token");
+    if (!token) {
       navigate("/login");
     } else {
       setIsAuthenticated(true);
@@ -20,7 +19,7 @@ const AppLayout = () => {
   }, [navigate]);
 
   if (!isAuthenticated) {
-    return null; // Will redirect in the useEffect
+    return null;
   }
 
   return (

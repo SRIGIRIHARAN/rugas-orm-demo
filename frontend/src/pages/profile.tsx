@@ -6,14 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
+import { ToastProvider } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const ProfilePage = () => {
-  const [user, setUser] = useState<{id: string; name: string; email: string; role: string} | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; email: string; role: string } | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const { toast } = useToast();
-  
+
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
@@ -23,27 +23,28 @@ const ProfilePage = () => {
       setEmail(parsedUser.email || "");
     }
   }, []);
-  
+
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name || !email) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
-    
+
     // Update user in localStorage
     const updatedUser = { ...user, name, email };
     localStorage.setItem("user", JSON.stringify(updatedUser));
     setUser(updatedUser);
-    
+
     toast({
       title: "Profile updated",
       description: "Your profile information has been updated",
+      variant: "success",
     });
   };
 
@@ -56,7 +57,7 @@ const ProfilePage = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
       </div>
-      
+
       <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
@@ -83,7 +84,7 @@ const ProfilePage = () => {
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -95,9 +96,9 @@ const ProfilePage = () => {
                   />
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div className="flex justify-end">
                 <Button type="submit">
                   Save Changes
