@@ -1,54 +1,32 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {
-  Edit,
-  MoreVertical,
-  Plus,
-  Search,
-  Trash2,
-  UserPlus
+  Edit, MoreVertical, Plus, Search, Trash2, UserPlus
 } from "lucide-react";
-import { ToastProvider } from "@/components/ui/use-toast";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
+  AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 
-interface Customer {
-  id: string;
+type Customer = {
+  _id: string;
   name: string;
   email: string;
   phone: string;
   address: string;
   createdAt: string;
-}
+};
 
 interface CustomerListProps {
   customers: Customer[];
@@ -65,15 +43,6 @@ const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
     customer.phone.includes(searchTerm)
   );
 
-  const handleDeleteCustomer = (id: string) => {
-    onDelete(id);
-    toast({
-      title: "Customer deleted",
-      description: "The customer has been deleted successfully",
-      variant: "success"
-    });
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
@@ -81,6 +50,15 @@ const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
       month: 'short',
       day: 'numeric'
     }).format(date);
+  };
+
+  const handleDeleteCustomer = (id: string) => {
+    onDelete(id);
+    toast({
+      title: "Customer deleted",
+      description: "The customer has been deleted successfully",
+      variant: "success"
+    });
   };
 
   return (
@@ -137,7 +115,7 @@ const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
               </TableRow>
             ) : (
               filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
+                <TableRow key={customer._id}>
                   <TableCell className="font-medium">{customer.name}</TableCell>
                   <TableCell>{customer.email}</TableCell>
                   <TableCell>{customer.phone}</TableCell>
@@ -153,7 +131,7 @@ const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate(`/customers/edit/${customer.id}`)}>
+                        <DropdownMenuItem onClick={() => navigate(`/customers/edit/${customer._id}`)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
@@ -174,7 +152,7 @@ const CustomerList = ({ customers, onDelete }: CustomerListProps) => {
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDeleteCustomer(customer.id)}
+                                  onClick={() => handleDeleteCustomer(customer._id)}
                                   className="bg-red-600 hover:bg-red-700"
                                 >
                                   Delete

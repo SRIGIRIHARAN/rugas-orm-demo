@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   Card,
@@ -26,9 +25,8 @@ import {
   Plus,
   Search,
   Trash2,
-  ShoppingBag
+  ShoppingBag,
 } from "lucide-react";
-import { ToastProvider } from "@/components/ui/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,57 +41,52 @@ import {
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  description: string;
-  imageUrl: string;
-  createdAt: string;
-}
+import { useProductStore, Product } from "../../store/useProductStore";
 
 interface ProductListProps {
   products: Product[];
-  onDelete: (id: string) => void;
 }
 
-const ProductList = ({ products, onDelete }: ProductListProps) => {
+const ProductList: React.FC<ProductListProps> = ({ products }) => {
+  const navigate = useNavigate();
+  const deleteProduct = useProductStore((state) => state.deleteProduct);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const navigate = useNavigate();
 
-  const categories = Array.from(new Set(products.map(product => product.category))).sort();
-
-  const filteredProducts = products.filter(product =>
-    (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (categoryFilter === "" || product.category === categoryFilter)
+  const filteredProducts = products.filter(
+    (product) =>
+      (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (categoryFilter === "" || product.category === categoryFilter)
   );
 
-  const handleDeleteProduct = (id: string) => {
-    onDelete(id);
-    toast({
-      title: "Product deleted",
-      description: "The product has been deleted successfully",
-      variant: "success"
-    });
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      await deleteProduct(id);
+      toast({
+        title: "Product deleted",
+        description: "The product has been deleted successfully",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Error deleting product",
+        description: "Something went wrong. Please try again.",
+        variant: "error",
+      });
+    }
   };
 
-  const formatCurrency = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+  const formatCurrency = (price: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(price);
-  };
 
   return (
     <div className="space-y-4">
@@ -106,23 +99,27 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
               placeholder="Search products..."
               className="pl-8 w-full sm:w-[300px]"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchTerm(e.target.value)
+              }
             />
           </div>
 
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="flex h-10 w-full sm:w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="">All Categories</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Clothing">Clothing</option>
+            <option value="Home & Kitchen">Home & Kitchen</option>
+            <option value="Books">Books</option>
+            <option value="Beauty">Beauty</option>
+            <option value="Sports">Sports</option>
+            <option value="Toys">Toys</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
 
         <Button onClick={() => navigate("/products/new")}>
@@ -137,7 +134,9 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
             <div className="space-y-3">
               <ShoppingBag className="mx-auto h-12 w-12 text-muted-foreground/60" />
               <h3 className="text-lg font-medium">No products found</h3>
-              <p className="text-muted-foreground">Get started by adding your first product</p>
+              <p className="text-muted-foreground">
+                Get started by adding your first product
+              </p>
               <Button
                 variant="outline"
                 onClick={() => navigate("/products/new")}
@@ -170,21 +169,24 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden flex flex-col interactive-card">
+            <Card key={product._id} className="overflow-hidden flex flex-col">
               <div className="aspect-video relative overflow-hidden bg-muted">
                 <img
                   src={product.imageUrl || "/placeholder.svg"}
                   alt={product.name}
                   className="object-cover w-full h-full"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/placeholder.svg";
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
                   }}
                 />
               </div>
               <CardHeader className="p-4 pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-lg line-clamp-1">{product.name}</CardTitle>
+                    <CardTitle className="text-lg line-clamp-1">
+                      {product.name}
+                    </CardTitle>
                     <CardDescription className="truncate-2">
                       {product.description || "No description provided"}
                     </CardDescription>
@@ -198,7 +200,11 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => navigate(`/products/edit/${product.id}`)}>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          navigate(`/products/edit/${product._id}`)
+                        }
+                      >
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
@@ -212,13 +218,14 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the product.
+                                This action cannot be undone. This will permanently delete the
+                                product.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDeleteProduct(product.id)}
+                                onClick={() => handleDeleteProduct(product._id)}
                                 className="bg-red-600 hover:bg-red-700"
                               >
                                 Delete
@@ -240,7 +247,7 @@ const ProductList = ({ products, onDelete }: ProductListProps) => {
                 <p className="font-bold">{formatCurrency(product.price)}</p>
                 <Button
                   size="sm"
-                  onClick={() => navigate(`/orders/new?product=${product.id}`)}
+                  onClick={() => navigate(`/orders/new?product=${product._id}`)}
                 >
                   Create Order
                 </Button>

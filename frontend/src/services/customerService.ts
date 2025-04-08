@@ -12,11 +12,11 @@ export type LoginPayload = {
 };
 
 export type ApiResponse = {
-  status: boolean;
+  status: "success" | "error";
   message: string;
   token?: string;
   user?: {
-    _id: string;
+    id: string;
     name: string;
     email: string;
   };
@@ -32,13 +32,10 @@ export const registerCustomerAPI = async (
 ): Promise<ApiResponse> => {
   try {
     const res = await axiosInstance.post("/auth/register", payload);
-    return {
-      status: res.status,
-      ...res.data,
-    };
+    return res.data;
   } catch (error: any) {
     return {
-      status: false,
+      status: "error",
       message: error?.response?.data?.message || "Unexpected error",
     };
   }
@@ -49,13 +46,10 @@ export const loginCustomerAPI = async (
 ): Promise<ApiResponse> => {
   try {
     const res = await axiosInstance.post("/auth/login", payload);
-    return {
-      status: res.status,
-      ...res.data,
-    };
+    return res.data;
   } catch (error: any) {
     return {
-      status: false,
+      status: "error",
       message: error?.response?.data?.message || "Login failed",
     };
   }

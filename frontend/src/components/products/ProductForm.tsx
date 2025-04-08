@@ -1,6 +1,8 @@
-
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm, Controller } from "react-hook-form";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +11,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
@@ -22,14 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ToastProvider } from "@/components/ui/use-toast";
 import { ImagePlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useProductStore } from "../../store/useProductStore";
 
 interface ProductFormProps {
   editMode?: boolean;
   initialData?: {
-    id?: string;
+    _id?: string;
     name: string;
     category: string;
     price: number;
@@ -38,91 +39,90 @@ interface ProductFormProps {
   };
 }
 
+const categories = [
+  "Electronics",
+  "Clothing",
+  "Home & Kitchen",
+  "Books",
+  "Toys & Games",
+  "Health & Beauty",
+  "Sports & Outdoors",
+  "Automotive",
+  "Other"
+];
+
+const schema = yup.object().shape({
+  name: yup.string().required("Product name is required"),
+  category: yup.string().required("Category is required"),
+  price: yup
+    .number()
+    .typeError("Price must be a number")
+    .positive("Price must be greater than 0")
+    .required("Price is required"),
+  description: yup.string().optional(),
+  imageUrl: yup.string().url("Must be a valid URL").optional()
+});
+
+type ProductFormValues = yup.InferType<typeof schema>;
+
 const ProductForm = ({ editMode = false, initialData }: ProductFormProps) => {
-  const [name, setName] = useState(initialData?.name || "");
-  const [category, setCategory] = useState(initialData?.category || "");
-  const [price, setPrice] = useState(initialData?.price?.toString() || "");
-  const [description, setDescription] = useState(initialData?.description || "");
-  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
-  const [isLoading, setIsLoading] = useState(false);
-
   const navigate = useNavigate();
+  const { addProduct, updateProduct } = useProductStore();
 
-  const categories = [
-    "Electronics",
-    "Clothing",
-    "Home & Kitchen",
-    "Books",
-    "Toys & Games",
-    "Health & Beauty",
-    "Sports & Outdoors",
-    "Automotive",
-    "Other"
-  ];
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!name || !category || !price) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "error",
-      });
-      return;
+  const {
+    handleSubmit,
+    register,
+    control,
+    reset,
+    watch,
+    formState: { errors, isSubmitting }
+  } = useForm<ProductFormValues>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      name: initialData?.name || "",
+      category: initialData?.category || "",
+      price: initialData?.price || 0,
+      description: initialData?.description || "",
+      imageUrl: initialData?.imageUrl || ""
     }
+  });
 
-    setIsLoading(true);
+  const imageUrl = watch("imageUrl");
 
-    // Simulating API call - in a real app, this would connect to your backend
-    setTimeout(() => {
-      const products = JSON.parse(localStorage.getItem("products") || "[]");
+  const onSubmit = async (values: ProductFormValues) => {
+    try {
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("category", values.category);
+      formData.append("price", values.price.toString());
+      formData.append("description", values.description || "");
+      formData.append("imageUrl", values.imageUrl || "/placeholder.svg");
 
-      if (editMode && initialData?.id) {
-        const updatedProducts = products.map((product: any) =>
-          product.id === initialData.id
-            ? {
-              ...product,
-              name,
-              category,
-              price: parseFloat(price),
-              description,
-              imageUrl
-            }
-            : product
-        );
-
-        localStorage.setItem("products", JSON.stringify(updatedProducts));
-
+      if (editMode && initialData?._id) {
+        await updateProduct(initialData._id, formData);
         toast({
           title: "Product updated",
-          description: "Product information has been updated successfully",
+          description: "Product updated successfully",
           variant: "success"
         });
       } else {
-        const newProduct = {
-          id: Date.now().toString(),
-          name,
-          category,
-          price: parseFloat(price),
-          description,
-          imageUrl: imageUrl || "/placeholder.svg",
-          createdAt: new Date().toISOString(),
-        };
-
-        products.push(newProduct);
-        localStorage.setItem("products", JSON.stringify(products));
-
+        await addProduct(formData);
         toast({
           title: "Product added",
-          description: "New product has been added successfully",
+          description: "New product added successfully",
           variant: "success"
         });
       }
 
+      reset();
       navigate("/products");
-      setIsLoading(false);
-    }, 800);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "error"
+      });
+    }
   };
 
   return (
@@ -136,40 +136,42 @@ const ProductForm = ({ editMode = false, initialData }: ProductFormProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Product Name *</Label>
-              <Input
-                id="name"
-                placeholder="Product name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={isLoading}
-              />
+              <Input id="name" {...register("name")} disabled={isSubmitting} />
+              {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="category">Category *</Label>
-              <Select
-                value={category}
-                onValueChange={setCategory}
-                disabled={isLoading}
-              >
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Categories</SelectLabel>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="category"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Categories</SelectLabel>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.category && <p className="text-sm text-red-500">{errors.category.message}</p>}
             </div>
           </div>
 
@@ -181,26 +183,22 @@ const ProductForm = ({ editMode = false, initialData }: ProductFormProps) => {
                 <Input
                   id="price"
                   type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
                   className="pl-7"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  disabled={isLoading}
+                  {...register("price")}
+                  disabled={isSubmitting}
                 />
               </div>
+              {errors.price && <p className="text-sm text-red-500">{errors.price.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="imageUrl">Image URL</Label>
               <Input
                 id="imageUrl"
-                placeholder="https://example.com/image.jpg"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                disabled={isLoading}
+                {...register("imageUrl")}
+                disabled={isSubmitting}
               />
+              {errors.imageUrl && <p className="text-sm text-red-500">{errors.imageUrl.message}</p>}
             </div>
           </div>
 
@@ -208,11 +206,9 @@ const ProductForm = ({ editMode = false, initialData }: ProductFormProps) => {
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              placeholder="Product description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              disabled={isLoading}
               rows={4}
+              {...register("description")}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -246,12 +242,12 @@ const ProductForm = ({ editMode = false, initialData }: ProductFormProps) => {
               type="button"
               variant="outline"
               onClick={() => navigate("/products")}
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting
                 ? (editMode ? "Updating..." : "Creating...")
                 : (editMode ? "Update Product" : "Add Product")}
             </Button>

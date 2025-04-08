@@ -1,48 +1,42 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ProductForm from "@/components/products/ProductForm";
-import { generateMockData } from "@/lib/mockData";
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  description: string;
-  imageUrl: string;
-}
+import { useProductStore } from "@/store/useProductStore"; // Zustand store
+import { Product } from "@/store/useProductStore";
 
 const EditProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { products, fetchProducts } = useProductStore();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
-    // Initialize mock data
-    generateMockData();
-    
-    // Load product data
-    const products = JSON.parse(localStorage.getItem("products") || "[]");
-    const foundProduct = products.find((p: Product) => p.id === id);
-    
-    if (foundProduct) {
-      setProduct(foundProduct);
-    } else {
-      // Product not found, redirect to products list
-      navigate("/products");
-    }
-    
-    setLoading(false);
-  }, [id, navigate]);
+    const loadProduct = async () => {
+      if (products.length === 0) {
+        await fetchProducts();
+      }
+
+      const found = products.find((p) => p._id === id);
+
+      if (found) {
+        setProduct(found);
+      } else {
+        navigate("/products");
+      }
+
+      setLoading(false);
+    };
+
+    loadProduct();
+  }, [products, fetchProducts, id, navigate]);
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
   if (!product) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   return (
@@ -50,8 +44,19 @@ const EditProductPage = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Edit Product</h1>
       </div>
-      
-      <ProductForm editMode initialData={product} />
+
+      <ProductForm
+        editMode
+        initialData={{
+          _id: product._id, 
+          name: product.name,
+          category: product.category,
+          price: product.price,
+          description: product.description,
+          imageUrl: product.imageUrl,
+        }}
+      />
+
     </div>
   );
 };

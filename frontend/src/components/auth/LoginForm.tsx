@@ -38,6 +38,7 @@ const LoginForm = () => {
       toast({
         title: "Success",
         description: "You have been logged in",
+        variant: "success"
       });
       navigate("/dashboard");
     } else {
