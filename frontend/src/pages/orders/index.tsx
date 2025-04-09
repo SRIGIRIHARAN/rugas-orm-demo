@@ -1,78 +1,66 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import OrderList from "@/components/orders/OrderList";
-import { generateMockData } from "@/lib/mockData";
-
-interface Order {
-  id: string;
-  customerId: string;
-  products: Array<{
-    productId: string;
-    quantity: number;
-  }>;
-  status: "placed" | "shipped" | "delivered" | "cancelled";
-  total: number;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Customer {
-  id: string;
-  name: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-}
+import { useOrderStore } from "../../store/useOrderStore";
+import { useCustomerStore } from "../../store/useCustomerStore";
+import { useProductStore } from "../../store/useProductStore";
 
 const OrdersPage = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  
+  const { orders, fetchOrders, updateOrderStatus } = useOrderStore();
+  const { customers, fetchCustomers } = useCustomerStore();
+  const { products, fetchProducts } = useProductStore();
+
   useEffect(() => {
-    // Initialize mock data
-    generateMockData();
-    
-    // Load data from localStorage
-    loadData();
+    loadAllData();
   }, []);
-  
-  const loadData = () => {
-    const storedOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-    const storedCustomers = JSON.parse(localStorage.getItem("customers") || "[]");
-    const storedProducts = JSON.parse(localStorage.getItem("products") || "[]");
-    
-    setOrders(storedOrders);
-    setCustomers(storedCustomers);
-    setProducts(storedProducts);
+
+  const loadAllData = async () => {
+    await Promise.all([fetchOrders(), fetchCustomers(), fetchProducts()]);
   };
-  
-  const handleStatusChange = (id: string, status: "placed" | "shipped" | "delivered" | "cancelled") => {
-    const updatedOrders = orders.map(order => 
-      order.id === id 
-        ? { ...order, status, updatedAt: new Date().toISOString() } 
-        : order
-    );
-    
-    localStorage.setItem("orders", JSON.stringify(updatedOrders));
-    setOrders(updatedOrders);
+
+  const handleStatusChange = async (
+    id: string,
+    status: "placed" | "shipped" | "delivered" | "cancelled"
+  ) => {
+    await updateOrderStatus(id, status);
   };
+
+  const mappedOrders = orders.map((order) => {
+    const product = order.product?.[0];
+    const productData = products.find((p) => p._id === product?._id);
+    const orderTotal = (productData?.price || 0) * order.quantity;
+
+    return {
+      id: order._id,
+      customerId: order.customer, 
+      productId: product?._id || "",
+      quantity: order.quantity,
+      total: orderTotal,
+      status: (order.status || "placed") as "placed" | "shipped" | "delivered" | "cancelled",
+      createdAt: order.createdAt ?? "",
+      updatedAt: order.updatedAt ?? "",
+    };
+  });
+  const mappedCustomers = customers.map((c) => ({
+    id: c._id,
+    name: c.name,
+  }));
+
+  const mappedProducts = products.map((p) => ({
+    id: p._id,
+    name: p.name,
+    category: p.category,
+  }));
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
       </div>
-      
-      <OrderList 
-        orders={orders} 
-        customers={customers} 
-        products={products} 
-        onStatusChange={handleStatusChange} 
+      <OrderList
+        orders={mappedOrders}
+        customers={mappedCustomers}
+        products={mappedProducts}
+        onStatusChange={handleStatusChange}
       />
     </div>
   );

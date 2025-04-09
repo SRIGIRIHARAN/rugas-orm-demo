@@ -1,24 +1,20 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Order = require('../models/Order');
+const Order = require("../models/Order");
+const orderController = require("../controllers/orderController");
+// Create a new order
+router.post("/", orderController.createOrder);
 
-router.get('/', async (req, res) => {
-  try {
-    const orders = await Order.find().populate('customer').populate('products');
-    res.json(orders);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+// Get all orders with optional query filters
+router.get("/getAllorder", orderController.getAllOrders);
 
-router.post('/', async (req, res) => {
-  const order = new Order(req.body);
-  try {
-    const newOrder = await order.save();
-    res.status(201).json(newOrder);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
+// Get a single order by ID
+router.get("/:id", orderController.getOrderById);
+
+// Update order status
+router.patch("/:id/status", orderController.updateOrderStatus);
+
+// Update full order (general update)
+router.put("/:id", orderController.updateOrder);
 
 module.exports = router;

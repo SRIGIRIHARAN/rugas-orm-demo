@@ -13,14 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -40,18 +32,6 @@ import {
   Filter
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ToastProvider } from "@/components/ui/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 
 interface Customer {
@@ -67,14 +47,11 @@ interface Product {
 
 interface Order {
   id: string;
-  customerId: string;
-  products: Array<{
-    productId: string;
-    quantity: number;
-  }>;
-  status: "placed" | "shipped" | "delivered" | "cancelled";
+  customerId: any;
+  productId: string;
+  quantity: number;
   total: number;
-  notes?: string;
+  status: "placed" | "shipped" | "delivered" | "cancelled";
   createdAt: string;
   updatedAt: string;
 }
@@ -102,43 +79,34 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Extract all unique product categories
   const categories = Array.from(
     new Set(products.map(product => product.category))
   ).sort();
 
-  // Apply filters
   const filteredOrders = orders.filter(order => {
-    // Customer name filter
     const customer = customers.find(c => c.id === order.customerId);
     const customerName = customer ? customer.name.toLowerCase() : "";
     const matchesSearch = customerName.includes(searchTerm.toLowerCase()) ||
       order.id.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Status filter
     const matchesStatus = !statusFilter || order.status === statusFilter;
 
-    // Customer filter
     const matchesCustomer = !customerFilter || order.customerId === customerFilter;
 
-    // Category filter - check if any product in order belongs to the selected category
-    const matchesCategory = !categoryFilter || order.products.some(item => {
-      const product = products.find(p => p.id === item.productId);
-      return product && product.category === categoryFilter;
-    });
+    const product = products.find(p => p.id === order.productId);
+    const matchesCategory = !categoryFilter || (product && product.category === categoryFilter);
 
     return matchesSearch && matchesStatus && matchesCustomer && matchesCategory;
   });
 
-  // Get customer name by ID
   const getCustomerName = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
     return customer ? customer.name : "Unknown Customer";
   };
 
-  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
@@ -146,7 +114,6 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
     }).format(date);
   };
 
-  // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -157,7 +124,6 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
   const handleStatusChange = (orderId: string, newStatus: "placed" | "shipped" | "delivered" | "cancelled") => {
     onStatusChange(orderId, newStatus);
 
-    // Show toast notification
     const statusMessages = {
       placed: "Order status set to Placed",
       shipped: "Order has been marked as Shipped",
@@ -172,7 +138,6 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
     });
   };
 
-  // Check if there's a customer filter in the URL params
   React.useEffect(() => {
     const customerIdFromUrl = searchParams.get("customer");
     if (customerIdFromUrl) {
@@ -206,46 +171,43 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
             <span className="text-sm text-muted-foreground">Filters:</span>
           </div>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-8 text-xs px-3 w-[130px]">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
-              <SelectItem value="placed">Placed</SelectItem>
-              <SelectItem value="shipped">Shipped</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+          <select
+            className="h-8 text-xs px-3 border rounded-md"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="placed">Placed</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
 
-          <Select value={customerFilter} onValueChange={setCustomerFilter}>
-            <SelectTrigger className="h-8 text-xs px-3 w-[150px]">
-              <SelectValue placeholder="All Customers" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Customers</SelectItem>
-              {customers.map(customer => (
-                <SelectItem key={customer.id} value={customer.id}>
-                  {customer.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            className="h-8 text-xs px-3 border rounded-md"
+            value={customerFilter}
+            onChange={(e) => setCustomerFilter(e.target.value)}
+          >
+            <option value="">All Customers</option>
+            {customers.map((customer) => (
+              <option key={customer.id} value={customer.id}>
+                {customer.name}
+              </option>
+            ))}
+          </select>
 
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="h-8 text-xs px-3 w-[150px]">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            className="h-8 text-xs px-3 border rounded-md"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="">All Categories</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
 
           {(statusFilter || customerFilter || categoryFilter) && (
             <Button
@@ -302,7 +264,7 @@ const OrderList = ({ orders, customers, products, onStatusChange }: OrderListPro
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">#{order.id}</TableCell>
                   <TableCell>{getCustomerName(order.customerId)}</TableCell>
-                  <TableCell>{formatDate(order.createdAt)}</TableCell>
+                  <TableCell>{order.createdAt ? formatDate(order.createdAt) : "N/A"}</TableCell>
                   <TableCell>{formatCurrency(order.total)}</TableCell>
                   <TableCell>
                     <Badge className={cn(statusStyles[order.status], "capitalize")}>

@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import OrderForm from "@/components/orders/OrderForm";
-import { generateMockData } from "@/lib/mockData";
+import { useOrderStore } from "@/store/useOrderStore";
 
-interface Order {
-  id: string;
+interface OrderFormData {
+  id?: string;
   customerId: string;
   products: Array<{
     productId: string;
@@ -18,33 +17,64 @@ interface Order {
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<Order | null>(null);
+
+  const { orders, fetchOrders, updateOrder } = useOrderStore();
   const [loading, setLoading] = useState(true);
-  
+  const [orderData, setOrderData] = useState<OrderFormData | null>(null);
+
   useEffect(() => {
-    // Initialize mock data
-    generateMockData();
-    
-    // Load order data
-    const orders = JSON.parse(localStorage.getItem("orders") || "[]");
-    const foundOrder = orders.find((o: Order) => o.id === id);
-    
-    if (foundOrder) {
-      setOrder(foundOrder);
-    } else {
-      // Order not found, redirect to orders list
-      navigate("/orders");
-    }
-    
-    setLoading(false);
-  }, [id, navigate]);
+    const loadOrder = async () => {
+      if (orders.length === 0) {
+        await fetchOrders();
+      }
 
-  if (loading) {
+      const found = orders.find((o) => o._id === id);
+      if (!found) {
+        navigate("/orders");
+        return;
+      }
+
+      setOrderData({
+        customerId:
+          typeof found.customer === "string"
+            ? found.customer
+            : found.customer?._id ?? "",
+        products: [
+          {
+            productId:
+              typeof found.product === "string"
+                ? found.product
+                : found.product?._id ?? "",
+            quantity: found.quantity,
+          },
+        ],
+        status: found.status as "placed" | "shipped" | "delivered" | "cancelled",
+        notes: found.notes ?? "",
+      });
+
+      setLoading(false);
+    };
+
+    loadOrder();
+  }, [id, orders, fetchOrders, navigate]);
+
+  const handleUpdate = async (data: OrderFormData) => {
+    if (!id) return;
+
+    const transformed = {
+      customerId: data.customerId,
+      product: data.products[0].productId,
+      quantity: data.products[0].quantity,
+      status: data.status,
+      notes: data.notes,
+    };
+
+    await updateOrder(id, transformed);
+    navigate("/orders");
+  };
+
+  if (loading || !orderData) {
     return <div>Loading...</div>;
-  }
-
-  if (!order) {
-    return null; // Will redirect in useEffect
   }
 
   return (
@@ -52,8 +82,8 @@ const EditOrderPage = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Edit Order</h1>
       </div>
-      
-      <OrderForm editMode initialData={order} />
+
+      <OrderForm editMode initialData={orderData} onSubmit={handleUpdate} />
     </div>
   );
 };

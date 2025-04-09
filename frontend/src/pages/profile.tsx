@@ -63,7 +63,7 @@ const ProfilePage = () => {
           <CardHeader>
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src="/placeholder.svg" alt={name} />
+                <AvatarImage src="https://avatar.iran.liara.run/public/boy?username=Ash" alt={name} />
                 <AvatarFallback>{name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>

@@ -9,13 +9,18 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: 'https://rugas-orm-demo-neon.vercel.app',
+    credentials: true
+}));
 app.use(express.json());
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/customers', require('./routes/customerRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use("/api/dashboard", require("./routes/dashboardRoutes"));
+
 
 app.get('/', (req, res) => {
     res.send('Welcome to Rugas ORM Backend');
