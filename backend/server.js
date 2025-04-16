@@ -10,7 +10,7 @@ connectDB();
 const app = express();
 
 app.use(cors({
-    origin: 'https://rugas-orm-demo-neon.vercel.app',
+    origin: ['https://rugas-orm-demo-neon.vercel.app', 'http://localhost:8080'],
     credentials: true
 }));
 app.use(express.json());
